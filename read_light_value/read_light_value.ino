@@ -57,7 +57,7 @@ void loop() {
     delay(20);
   }
 }
-void read_cds_value()
+int read_cds_value()
 {
   int sensor_value_array[10];
   int mean_sensor_value;
@@ -70,6 +70,7 @@ void read_cds_value()
   mean_sensor_value /=10;
   lcd.print("brightness: ");
   lcd.print(mean_sensor_value);
+  return mean_sensor_value;
 }
 void display_lcd(int mode)
 {
