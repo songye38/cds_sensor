@@ -79,6 +79,157 @@ void display_lcd(int mode)
     lcd.clear();
   }
 }
+void batterylevel(int xpos,int ypos)
+{
+  //read the voltage and convert it to volt
+  double curvolt = double( readVcc() ) / 1000;
+  Serial.println(curvolt);
+  // check if voltge is bigger than 4.2 volt so this is a power source
+  if(curvolt > 8.8)
+  {
+    byte batlevel[8] = {  //9v를 기준으로 다 차 있을 때
+    B01110,
+    B11111,
+    B10101,
+    B10001,
+    B11011,
+    B11011,
+    B11111,
+    B11111,
+    };
+    lcd.createChar(0 , batlevel);
+    lcd.setCursor(xpos,ypos);
+    lcd.write(byte(0));
+  }
+  if(curvolt <= 8.8 && curvolt > 8.0)
+  {
+    byte batlevel[8] = {
+    B01110,
+    B11111,
+    B11111,
+    B11111,
+    B11111,
+    B11111,
+    B11111,
+    B11111,
+    };
+    lcd.createChar(0 , batlevel);
+    lcd.setCursor(xpos,ypos);
+    lcd.write(byte(0));
+  }
+  if(curvolt <= 8.0 && curvolt > 7.0)
+  {
+    byte batlevel[8] = {
+    B01110,
+    B10001,
+    B11111,
+    B11111,
+    B11111,
+    B11111,
+    B11111,
+    B11111,
+    };
+    lcd.createChar(0 , batlevel);
+    lcd.setCursor(xpos,ypos);
+    lcd.write(byte(0));
+  }
+  if(curvolt <= 7.0 && curvolt > 6.0)
+  {
+    byte batlevel[8] = {
+    B01110,
+    B10001,
+    B10001,
+    B11111,
+    B11111,
+    B11111,
+    B11111,
+    B11111,
+    };
+    lcd.createChar(0 , batlevel);
+    lcd.setCursor(xpos,ypos);
+    lcd.write(byte(0));
+  }
+  if(curvolt <= 6.0 && curvolt > 5.0)
+  {
+    byte batlevel[8] = {
+    B01110,
+    B10001,
+    B10001,
+    B10001,
+    B11111,
+    B11111,
+    B11111,
+    B11111,
+    };
+    lcd.createChar(0 , batlevel);
+    lcd.setCursor(xpos,ypos);
+    lcd.write(byte(0));
+  }
+  if(curvolt <= 5.0 && curvolt > 4.0)
+  {
+    byte batlevel[8] = {
+    B01110,
+    B10001,
+    B10001,
+    B10001,
+    B10001,
+    B11111,
+    B11111,
+    B11111,
+    };
+    lcd.createChar(0 , batlevel);
+    lcd.setCursor(xpos,ypos);
+    lcd.write(byte(0));
+  }
+  if(curvolt <= 4.0 && curvolt > 3.0)
+  {
+    byte batlevel[8] = {
+    B01110,
+    B10001,
+    B10001,
+    B10001,
+    B10001,
+    B10001,
+    B11111,
+    B11111,
+    };
+    lcd.createChar(0 , batlevel);
+    lcd.setCursor(xpos,ypos);
+    lcd.write(byte(0));
+  }
+  if(curvolt <= 3.0 && curvolt > 2.0)
+  {
+    byte batlevel[8] = {
+    B01110,
+    B10001,
+    B10001,
+    B10001,
+    B10001,
+    B10001,
+    B10001,
+    B11111,
+    };
+    lcd.createChar(0 , batlevel);
+    lcd.setCursor(xpos,ypos);
+    lcd.write(byte(0));
+  }
+  if(curvolt <= 2.0 && curvolt > 1.0)
+  {
+    byte batlevel[8] = {
+    B01110,
+    B10001,
+    B10001,
+    B10001,
+    B10001,
+    B10001,
+    B10001,
+    B11111,
+    };
+    lcd.createChar(0 , batlevel);
+    lcd.setCursor(xpos,ypos);
+    lcd.write(byte(0));
+  }  
+}
 long readVcc() {
   long result;
   // Read 1.1V reference against AVcc
