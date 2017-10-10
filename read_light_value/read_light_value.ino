@@ -1,5 +1,13 @@
 
 #include <LiquidCrystal.h>
+#include <SPI.h>
+#include <SD.h>
+
+// set up variables using the SD utility library functions:
+Sd2Card card;
+SdVolume volume;
+SdFile root;
+const int chipSelect = 4;
 
 //button 
 int mode =-1;
