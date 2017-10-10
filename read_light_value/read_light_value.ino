@@ -1,5 +1,6 @@
 
 #include <LiquidCrystal.h>
+
 //button 
 int mode =-1;
 int sw = 8;
@@ -23,6 +24,7 @@ void setup() {
 }
 //다시 처음으로 돌아가는 모드 추가 여기에 나중에 부저를 추가하면 더 좋다 
 void loop() {
+  batterylevel(15,0);
   
   if(digitalRead(sw)==LOW) //스위치가 눌리면 ..... 
   {
