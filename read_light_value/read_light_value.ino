@@ -250,6 +250,26 @@ long readVcc() {
   result = 1126400L / result; // Back-calculate AVcc in mV
   return result;
 }
+void write_to_sd(int value)
+{
+  // open the file. note that only one file can be open at a time,
+  // so you have to close this one before opening another.
+  File dataFile = SD.open("datalog.txt", FILE_WRITE);
+
+  // if the file is available, write to it:
+  if (dataFile) {
+    dataFile.print("cds value : ");
+    dataFile.println(value);
+    dataFile.close();
+    lcd.print("o");
+    // print to the serial port too:
+    Serial.println(value);
+  }
+  // if the file isn't open, pop up an error:
+  else {
+    lcd.print("x");
+  }
+}
 void initialize_sd()
 {
   while (!Serial) {
