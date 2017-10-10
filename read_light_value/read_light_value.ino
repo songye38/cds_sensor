@@ -27,6 +27,8 @@ void setup() {
   Serial.begin(9600);
   pinMode(sw, INPUT_PULLUP);
   lcd.begin(16, 2);
+  initialize_sd();
+  
 }
 //다시 처음으로 돌아가는 모드 추가 여기에 나중에 부저를 추가하면 더 좋다 
 void loop() {
@@ -40,7 +42,8 @@ void loop() {
       if(mode==1) {
         tone(toneNum,1800,50);
         display_lcd(mode);
-        read_cds_value();
+        int cds_value = read_cds_value();
+        write_to_sd(cds_value);
       }
       else if(mode==-1)
       {
