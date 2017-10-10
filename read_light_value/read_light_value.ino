@@ -4,9 +4,7 @@
 #include <SD.h>
 
 // set up variables using the SD utility library functions:
-Sd2Card card;
-SdVolume volume;
-SdFile root;
+File dataFile;
 const int chipSelect = 4;
 
 //button 
@@ -251,6 +249,17 @@ long readVcc() {
   result |= ADCH << 8;
   result = 1126400L / result; // Back-calculate AVcc in mV
   return result;
+}
+void initialize_sd()
+{
+  while (!Serial) {
+    ; // wait for serial port to connect. Needed for native USB port only
+  }
+  Serial.print("Initializing SD card...");
+  if (!SD.begin(chipSelect)) {
+    Serial.print("no");
+  }
+  Serial.print("yes"); 
 }
 
 
