@@ -5,7 +5,7 @@
 
 // set up variables using the SD utility library functions:
 File dataFile;
-const int chipSelect = 4;
+const int chipSelect = 6;
 
 //button 
 int mode =-1;
@@ -19,17 +19,16 @@ int toneNum = 7;
 int sensor_value = 0;
 
 //lcd display
-const int rs = 12, en = 11, d4 = 5, d5 = 6, d6 = 3, d7 = 2;
+const int rs = 10, en = 9, d4 = 5, d5 = 4, d6 = 3, d7 = 2;
 LiquidCrystal lcd(rs, en, d4, d5, d6, d7);
 
 void setup() {
-  // put your setup code here, to run once:
   Serial.begin(9600);
   pinMode(sw, INPUT_PULLUP);
   lcd.begin(16, 2);
   initialize_sd();
-  
 }
+
 //다시 처음으로 돌아가는 모드 추가 여기에 나중에 부저를 추가하면 더 좋다 
 void loop() {
   batterylevel(15,0);
@@ -41,14 +40,14 @@ void loop() {
       //Serial.println(mode);
       if(mode==1) {
         tone(toneNum,1800,50);
-        display_lcd(mode);
+        display_onoff(mode);
         int cds_value = read_cds_value();
         write_to_sd(cds_value);
       }
       else if(mode==-1)
       {
         tone(toneNum,2000,50);
-        display_lcd(mode);
+        display_onoff(mode);
       }
     }
     sw_status = 1;
@@ -71,14 +70,17 @@ int read_cds_value()
     mean_sensor_value += sensor_value_array[i];
   }
   mean_sensor_value /=10;
+  lcd.setCursor(0, 1);
   lcd.print("brightness: ");
   lcd.print(mean_sensor_value);
   return mean_sensor_value;
 }
-void display_lcd(int mode)
+void display_onoff(int mode)
 {
   if(mode==1){
-    lcd.clear();
+    lcd.setCursor(0,1);
+    lcd.print("");
+    lcd.setCursor(0, 1);
     lcd.print("welcome back!!!");
     delay(1000);
     lcd.clear();
@@ -86,16 +88,17 @@ void display_lcd(int mode)
   else if(mode==-1)
   {
     lcd.clear();
+    lcd.setCursor(0, 1);
     lcd.print("Good Bye~~~");
     delay(1000);
     lcd.clear();
   }
 }
+//9v max
 void batterylevel(int xpos,int ypos)
 {
   //read the voltage and convert it to volt
   double curvolt = double( readVcc() ) / 1000;
-  Serial.println(curvolt);
   // check if voltge is bigger than 4.2 volt so this is a power source
   if(curvolt > 8.8)
   {
@@ -242,7 +245,8 @@ void batterylevel(int xpos,int ypos)
     lcd.write(byte(0));
   }  
 }
-long readVcc() {
+long readVcc() 
+{
   long result;
   // Read 1.1V reference against AVcc
   ADMUX = _BV(REFS0) | _BV(MUX3) | _BV(MUX2) | _BV(MUX1);
@@ -260,16 +264,13 @@ void write_to_sd(int value)
   // so you have to close this one before opening another.
   File dataFile = SD.open("datalog.txt", FILE_WRITE);
 
-  // if the file is available, write to it:
   if (dataFile) {
     dataFile.print("cds value : ");
     dataFile.println(value);
     dataFile.close();
     lcd.print("o");
-    // print to the serial port too:
     Serial.println(value);
   }
-  // if the file isn't open, pop up an error:
   else {
     lcd.print("x");
   }
@@ -280,10 +281,12 @@ void initialize_sd()
     ; // wait for serial port to connect. Needed for native USB port only
   }
   Serial.print("Initializing SD card...");
+
   if (!SD.begin(chipSelect)) {
-    Serial.print("no");
+    Serial.println("initialization failed!");
+    return;
   }
-  Serial.print("yes"); 
+  Serial.println("initialization done.");
 }
 
 
