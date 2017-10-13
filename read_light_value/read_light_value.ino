@@ -47,8 +47,9 @@ void loop() {
         tone(toneNum,1800,50);
         display_onoff(mode);
         int cds_value = read_cds_value();
-        write_to_sd(cds_value);
-        displayTime();
+        String Time = get_time();
+        String Date = get_date();
+        write_to_sd(cds_value, Time, Date);
       }
       else if(mode==-1)
       {
@@ -264,18 +265,23 @@ long readVcc()
   result = 1126400L / result; // Back-calculate AVcc in mV
   return result;
 }
-void write_to_sd(int value)
+void write_to_sd(int value, String time, String date)
 {
+  String dataString = "";
+  dataString +=time;
+  dataString +=",";
+  dataString += date;
+  dataString +=",";
+  dataString += value;
   // open the file. note that only one file can be open at a time,
   // so you have to close this one before opening another.
-  File dataFile = SD.open("datalog.txt", FILE_WRITE);
+  File dataFile = SD.open("datalog.csv", FILE_WRITE);
 
   if (dataFile) {
-    dataFile.print("cds value : ");
-    dataFile.println(value);
+    dataFile.println(dataString);
     dataFile.close();
     lcd.print("o");
-    Serial.println(value);
+    Serial.println(dataString);
   }
   else {
     lcd.print("x");
@@ -294,7 +300,6 @@ void initialize_sd()
   }
   Serial.println("initialization done.");
 }
-
 
 byte decToBcd(byte val)
 {
@@ -331,55 +336,56 @@ void setDS3231time(byte second, byte minute, byte hour, byte dayOfMonth, byte mo
   Wire.endTransmission();
 }
 
-void readDS3231time(byte *second,
-  byte *minute,
-  byte *hour,
-  byte *dayOfMonth,
-  byte *month,
-  byte *year)
+//시간을 읽는 함수
+void readDS3231time(byte *second, byte *minute, byte *hour)
 {
   Wire.beginTransmission(DS3231_I2C_ADDRESS);
   Wire.write(0); // set DS3231 register pointer to 00h
   Wire.endTransmission();
   Wire.requestFrom(DS3231_I2C_ADDRESS, 7);
   // request seven bytes of data from DS3231 starting from register 00h
+  
   *second = bcdToDec(Wire.read() & 0x7f);
   *minute = bcdToDec(Wire.read());
   *hour = bcdToDec(Wire.read() & 0x3f);
+}
+
+//날짜를 얻는 함수
+void readDS3231date(byte * dayOfMonth, byte * month, byte * year)
+{
+  Wire.beginTransmission(DS3231_I2C_ADDRESS);
+  Wire.write(3); // set DS3231 register pointer to 00h
+  Wire.endTransmission();
+  Wire.requestFrom(DS3231_I2C_ADDRESS, 7);
   *dayOfMonth = bcdToDec(Wire.read());
   *month = bcdToDec(Wire.read());
   *year = bcdToDec(Wire.read());
 }
 
-void displayTime()
-{
-byte second, minute, hour, dayOfMonth, month, year;
-readDS3231time(&second, &minute, &hour, &dayOfMonth, &month,
-&year);
-// send it to the serial monitor
-Serial.print(hour, DEC);
-// convert the byte variable to a decimal number when displayed
-Serial.print(":");
-if (minute<10)
-{
-Serial.print("0");
-}
-Serial.print(minute, DEC);
-Serial.print(":");
-if (second<10)
-{
-Serial.print("0");
-}
-Serial.print(second, DEC);
-Serial.print(" ");
 
-Serial.print(year , DEC);
-Serial.print("/");
-Serial.print(month, DEC);
-Serial.print("/");
-Serial.print(dayOfMonth, DEC);
-Serial.print(" ");
-
+String get_time()
+{
+   String time_sd;
+   byte second, minute, hour;
+   readDS3231time(&second, &minute, &hour);
+   time_sd += hour;
+   time_sd += ":";
+   time_sd += minute;
+   time_sd += ":";
+   time_sd += second;
+   return time_sd;
+}
+String get_date()
+{
+   String date_sd;
+   byte dayOfMonth, month, year;
+   readDS3231date(&dayOfMonth, &month,&year);
+   date_sd += year;
+   date_sd += "/";
+   date_sd += month;
+   date_sd += "/";
+   date_sd += dayOfMonth;
+   return date_sd;
 }
 
 
