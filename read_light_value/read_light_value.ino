@@ -255,33 +255,17 @@ void display_batterylevel()
   //read the voltage and convert it to volt
   double curvolt = double( readVcc() ) / 1000;
   // check if voltge is bigger than 4.2 volt so this is a power source
-  if(curvolt > 8.8)
+  if(curvolt > 4.8)
   {
      set_green_pin(3);
   }
-  if(curvolt <= 8.8 && curvolt > 8.0)
-  {
-    set_green_pin(3);
-  }
-  if(curvolt <= 8.0 && curvolt > 7.0)
-  {
-    set_green_pin(3);
-  }
-  if(curvolt <= 7.0 && curvolt > 6.0)
-  {
-    set_yellow_pin(3);
-  }
-  if(curvolt <= 6.0 && curvolt > 5.0)
-  {
-    set_yellow_pin(3);
-  }
-  if(curvolt <= 5.0 && curvolt > 4.0)
+  if(curvolt <= 4.8 && curvolt > 4.0)
   {
     set_yellow_pin(3);
   }
   if(curvolt <= 4.0 && curvolt > 3.0)
   {
-    set_red_pin(3);
+    set_yellow_pin(3);
   }
   if(curvolt <= 3.0 && curvolt > 2.0)
   {
@@ -290,7 +274,8 @@ void display_batterylevel()
   if(curvolt <= 2.0 && curvolt > 1.0)
   {
     set_red_pin(3);
-  }  
+  }
+  
 }
 long readVcc() 
 {
