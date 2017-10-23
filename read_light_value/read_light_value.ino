@@ -18,8 +18,8 @@ Adafruit_GPS GPS(&mySerial);
 /*
  * setting for rgb led 8bit
  */
+ #define PIN 5
 Adafruit_NeoPixel strip = Adafruit_NeoPixel(8, PIN, NEO_GRB + NEO_KHZ800);
-#define PIN 5
 
 // set up variables using the SD utility library functions:
 File dataFile;
@@ -30,6 +30,7 @@ const int onoff = 0;
 const int gps =1;
 const int sdCard = 2;
 const int battery = 3;
+const int saving = 4;
 
 //blue color -> callibration
 //red color -> something goes wrong
@@ -194,7 +195,7 @@ void setup() {
 
 //다시 처음으로 돌아가는 모드 추가 여기에 나중에 부저를 추가하면 더 좋다 
 void loop() {
-  display_batterylevel();
+  
   read_gps_data();
   
   if(digitalRead(sw)==LOW) //스위치가 눌리면 ..... 
@@ -204,7 +205,7 @@ void loop() {
       //Serial.println(mode);
       if(mode==1) {
         tone(toneNum,1800,50);
-        display_onoff(mode);
+        //display_onoff(mode);
         int cds_value = read_cds_value();
 //        String Time = get_time();
 //        String Date = get_date();
@@ -213,7 +214,7 @@ void loop() {
       else if(mode==-1)
       {
         tone(toneNum,2000,50);
-        display_onoff(mode);
+        //display_onoff(mode);
       }
     }
     sw_status = 1;
@@ -245,51 +246,6 @@ int read_cds_value()
 }
 
 
-/*
- * setting for battery and battery display
- * max is 9v
- */
-
-void display_batterylevel()
-{
-  //read the voltage and convert it to volt
-  double curvolt = double( readVcc() ) / 1000;
-  // check if voltge is bigger than 4.2 volt so this is a power source
-  if(curvolt > 4.8)
-  {
-     set_green_pin(3);
-  }
-  if(curvolt <= 4.8 && curvolt > 4.0)
-  {
-    set_yellow_pin(3);
-  }
-  if(curvolt <= 4.0 && curvolt > 3.0)
-  {
-    set_yellow_pin(3);
-  }
-  if(curvolt <= 3.0 && curvolt > 2.0)
-  {
-    set_red_pin(3);
-  }
-  if(curvolt <= 2.0 && curvolt > 1.0)
-  {
-    set_red_pin(3);
-  }
-  
-}
-long readVcc() 
-{
-  long result;
-  // Read 1.1V reference against AVcc
-  ADMUX = _BV(REFS0) | _BV(MUX3) | _BV(MUX2) | _BV(MUX1);
-  delay(2); // Wait for Vref to settle
-  ADCSRA |= _BV(ADSC); // Convert
-  while (bit_is_set(ADCSRA, ADSC));
-  result = ADCL;
-  result |= ADCH << 8;
-  result = 1126400L / result; // Back-calculate AVcc in mV
-  return result;
-}
 
 /*
  * setting for sd card
@@ -309,7 +265,6 @@ void write_to_sd(int value, String time, String date)
   if (dataFile) {
     dataFile.println(dataString);
     dataFile.close();
-    //lcd.print("o");
     Serial.println(dataString);
   }
   else {
