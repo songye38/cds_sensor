@@ -56,9 +56,6 @@ int sensor_value = 0;
 boolean usingInterrupt = false;
 void useInterrupt(boolean); // Func prototype keeps Arduino 0023 happy
 
-
-
-
 void setup() {
   Serial.begin(115200);
   Serial.println("Adafruit GPS library basic test!");
@@ -88,7 +85,6 @@ void setup() {
   
   mySerial.println(PMTK_Q_RELEASE);
   pinMode(sw, INPUT_PULLUP);
-  initialize_sd();
   strip.begin();
   strip.show();
   set_green_pin(onoff);
@@ -97,7 +93,8 @@ void setup() {
 
 //다시 처음으로 돌아가는 모드 추가 여기에 나중에 부저를 추가하면 더 좋다 
 void loop() {
-  
+
+  check_sd();
   read_gps_data();
   
   if(digitalRead(sw)==LOW) //스위치가 눌리면 ..... 
@@ -173,7 +170,7 @@ void write_to_sd(int value, String time, String date)
     //lcd.print("x");
   }
 }
-void initialize_sd()
+void check_sd()
 {
   while (!Serial) {
     ; // wait for serial port to connect. Needed for native USB port only
