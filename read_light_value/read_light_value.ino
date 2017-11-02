@@ -1,9 +1,10 @@
+#include <Adafruit_NeoPixel.h>
+#include <SoftwareSerial.h>
 #include <Adafruit_GPS.h>
-#include <Wire.h>
 #include <SPI.h>
 #include <SD.h>
-#include <SoftwareSerial.h>
-#include <Adafruit_NeoPixel.h>
+
+
 #ifdef __AVR__
   #include <avr/power.h>
 #endif
@@ -57,10 +58,8 @@ boolean usingInterrupt = false;
 void useInterrupt(boolean); // Func prototype keeps Arduino 0023 happy
 
 void setup() {
-  Serial.begin(115200);
+  Serial.begin(9600);
   Serial.println("Adafruit GPS library basic test!");
-
-  // 9600 NMEA is the default baud rate for Adafruit MTK GPS's- some use 4800
   GPS.begin(9600);
   
   // uncomment this line to turn on RMC (recommended minimum) and GGA (fix data) including altitude
@@ -88,32 +87,28 @@ void setup() {
   strip.begin();
   strip.show();
   set_green_pin(onoff);
+  initialize_sd();
 }
 
 
 //다시 처음으로 돌아가는 모드 추가 여기에 나중에 부저를 추가하면 더 좋다 
 void loop() {
 
-  check_sd();
-  read_gps_data();
+  int gps_status = check_gps_ready();
   
   if(digitalRead(sw)==LOW) //스위치가 눌리면 ..... 
   {
     if(sw_status==0){
       mode *=-1;
-      //Serial.println(mode);
-      if(mode==1) {
-        tone(toneNum,1800,50);
-        //display_onoff(mode);
-        int cds_value = read_cds_value();
-//        String Time = get_time();
-//        String Date = get_date();
-//        write_to_sd(cds_value, Time, Date);
-      }
-      else if(mode==-1)
+      if(mode==1 && gps_status==1)   //turn on 
       {
-        tone(toneNum,2000,50);
-        //display_onoff(mode);
+        tone(toneNum,1800,50);
+        int cds_value = read_cds_value();
+        read_gps_write_to_sd(cds_value);
+      }
+      else if(mode==-1) //turn off
+      {
+        tone(toneNum,2300,50);
       }
     }
     sw_status = 1;
@@ -149,42 +144,22 @@ int read_cds_value()
 /*
  * setting for sd card
  */
-void write_to_sd(int value, String time, String date)
-{
-  String dataString = "";
-  dataString +=time;
-  dataString +=",";
-  dataString += date;
-  dataString +=",";
-  dataString += value;
-  // open the file. note that only one file can be open at a time,
-  // so you have to close this one before opening another.
-  File dataFile = SD.open("datalog.csv", FILE_WRITE);
 
-  if (dataFile) {
-    dataFile.println(dataString);
-    dataFile.close();
-    Serial.println(dataString);
-  }
-  else {
-    //lcd.print("x");
-  }
-}
-void check_sd()
+void initialize_sd()
 {
-  while (!Serial) {
-    ; // wait for serial port to connect. Needed for native USB port only
-  }
-  Serial.print("Initializing SD card...");
-
   if (!SD.begin(chipSelect)) {
     Serial.println("initialization failed!");
     set_red_pin(2);
     return;
   }
-  Serial.println("initialization done.");
-  set_green_pin(2);
+  else 
+  {
+     Serial.println("initialization done.");
+     set_green_pin(2);
+  }
 }
+
+
 
 /*
  * set rgb led 8bit pin 
@@ -249,8 +224,16 @@ void useInterrupt(boolean v) {
 }
 
 uint32_t timer = millis();
-void read_gps_data()
+void read_gps_write_to_sd(int cdsValue)
 {
+  String dataString = "";
+  String timeString = "";
+  String dateString ="";
+  String latitude;
+  String longitude;
+  String date;
+  String cds_value; 
+  String time;
   // in case you are not using the interrupt above, you'll
   // need to 'hand query' the GPS, not suggested :(
   if (! usingInterrupt) {
@@ -259,7 +242,6 @@ void read_gps_data()
     // if you want to debug, this is a good time to do it!
     if (GPSECHO)
       if (c) Serial.print(c);
-      
   }
   
   // if a sentence is received, we can check the checksum, parse it...
@@ -287,45 +269,89 @@ void read_gps_data()
     String minu = String(GPS.minute);
     String sec = String(GPS.seconds);
     
-    String time = hour + ":" + minu + ":" + sec;
-    char *fTime = new char[time.length() + 1];
-    strcpy(fTime, time.c_str());
+    time = hour + ":" + minu + ":" + sec;
+
     // 시분초를 HH:MM:SS형태로 바꿔주고, String값을 char*로 바꿔주어 LCD에 출력할 수 있도록 합니다.
     
-    //for(int i=0; i<504; i++) LcdWriteData(0x00); //LCD를 초기화 합니다
+    String day = String(GPS.day);
+    String month = String(GPS.month);
+    String year = String(GPS.year);
     
+    date = "20" + year + "/" + month + "/" + day;
    
+    char *fDate = new char[date.length() + 1];
+ 
+    delete [] fDate;
+    // 년월일을 LCD에 출력해 줍니다.
+
     if (GPS.fix) {
-      set_green_pin(1);
+      latitude += GPS.latitude;
+      latitude +=",";
+      longitude += GPS.longitude;
+      longitude +=",";
+      dateString += date;
+      dateString += ",";
+      timeString += time;
+      timeString += ",";
+      cds_value += cdsValue;
       
-      char lat[20];
-      char loc[20];
-      dtostrf(GPS.latitude, 9, 4, lat);
-      dtostrf(GPS.longitude, 9, 4, loc);
-      // dtostrf는 GPS.latitude와 GPS.longitude의 값(float값)을 Char* 로 바꿔줍니다.
-
-      lat[4] = lat[3];
-      lat[3] = lat[2];
-      lat[2] = ' ';
-
-      
-      loc[5] = loc[4];
-      loc[4] = loc[3];
-      loc[3] = ' ';
-     
-      
-      // GPS.latitude와 GPS.longitude값을 받아오면 소숫점 자리가 4번째 자리에 찍혀 있습니다.
-      // latitude = 3728,8640, longitude = 12700.8960
-      // 이것을 소수점 두번째 자리에 찍는 작업입니다.    
-
-      Serial.print("lat : ");
-      Serial.println(lat);
-
-      // latitude값과 longitude값을 LCD에 출력합니다.
-    }
-    else {
-      set_blue_pin(1);
+      File  dataFile = SD.open("file.csv", FILE_WRITE);
+      if (dataFile) 
+      {
+        dataFile.print(dateString);
+        dataFile.print(timeString);
+        dataFile.print(latitude);
+        dataFile.print(longitude);
+        dataFile.print(cds_value);
+        dataFile.close();
+        set_green_pin(3);
+      }
+      else 
+      {
+        set_red_pin(3);
+      }  
     }
   }
 }
+
+int check_gps_ready()
+{
+
+  // in case you are not using the interrupt above, you'll
+  // need to 'hand query' the GPS, not suggested :(
+  if (! usingInterrupt) {
+    // read data from the GPS in the 'main loop'
+    char c = GPS.read();
+    // if you want to debug, this is a good time to do it!
+    if (GPSECHO)
+      if (c) Serial.print(c);
+  }
+  
+  // if a sentence is received, we can check the checksum, parse it...
+  if (GPS.newNMEAreceived()) {
+   
+    if (!GPS.parse(GPS.lastNMEA()))   // this also sets the newNMEAreceived() flag to false
+      return;  // we can fail to parse a sentence in which case we should just wait for another
+  }
+
+  // if millis() or timer wraps around, we'll just reset it
+  if (timer > millis())  timer = millis();
+
+  // approximately every 2 seconds or so, print out the current stats
+  if (millis() - timer > 2000) { 
+    timer = millis(); // reset the timer
+
+    if (GPS.fix)  //gps is fixed 
+    {
+      set_green_pin(1);
+      return 1;
+    }
+    else   //gps is not fixed 
+    {
+      set_blue_pin(1);
+      return 0;
+    }
+  }
+}
+
 
