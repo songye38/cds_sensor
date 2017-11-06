@@ -23,20 +23,19 @@ Adafruit_GPS GPS(&mySerial);
 Adafruit_NeoPixel strip = Adafruit_NeoPixel(8, PIN, NEO_GRB + NEO_KHZ800);
 
 // set up variables using the SD utility library functions:
-File dataFile;
 const int chipSelect = 6;
 
 //set up for rgb led 8 bit
 const int onoff = 0;
 const int gps =1;
 const int sdCard = 2;
-const int battery = 3;
-const int saving = 4;
+const int saving = 3;
 
 //blue color -> callibration
 //red color -> something goes wrong
 //green -> turn on / done something!
 
+File dataFile;
 
 /* 
  *  setting for button
@@ -90,26 +89,28 @@ void setup() {
   initialize_sd();
 }
 
-
-//다시 처음으로 돌아가는 모드 추가 여기에 나중에 부저를 추가하면 더 좋다 
+//일단 처음 켰을 때는 gps를 파란색으로 만들어 놓고 
+//gps값이 fix가 되었다면 초록색으로 만들어주기 
+//처음 lcd를 이용했을 때는 on/off 모드가 있었지만
+//이제는 led를 이용하니까 그냥 gps값이 fix되었을 때 버튼을 눌러 그 순간의 밝기값과 위치값과 그리고 시간을 sd카드에 저장만 해주기 
 void loop() {
 
   int gps_status = check_gps_ready();
   
   if(digitalRead(sw)==LOW) //스위치가 눌리면 ..... 
   {
-    if(sw_status==0){
-      mode *=-1;
-      if(mode==1 && gps_status==1)   //turn on 
-      {
+    if(sw_status==0 && gps_status==1)
+    {
+//      Serial.println(".................................");
+//      Serial.println(".................................");
+//      Serial.print("sw_status : ");
+//      Serial.println(sw_status);
+//      Serial.println(".................................");
+//      Serial.println(".................................");
+      
+     
         tone(toneNum,1800,50);
-        int cds_value = read_cds_value();
-        read_gps_write_to_sd(cds_value);
-      }
-      else if(mode==-1) //turn off
-      {
-        tone(toneNum,2300,50);
-      }
+        read_gps_write_to_sd();
     }
     sw_status = 1;
     delay(20);
@@ -120,7 +121,6 @@ void loop() {
     delay(20);
   }
 }
-
 
 /*
  * read cds sensor value 
@@ -140,14 +140,13 @@ int read_cds_value()
 }
 
 
-
 /*
  * setting for sd card
  */
 
 void initialize_sd()
 {
-  if (!SD.begin(chipSelect)) {
+  if (!SD.begin(6)) {
     Serial.println("initialization failed!");
     set_red_pin(2);
     return;
@@ -158,8 +157,6 @@ void initialize_sd()
      set_green_pin(2);
   }
 }
-
-
 
 /*
  * set rgb led 8bit pin 
@@ -174,6 +171,12 @@ void set_red_pin(uint16_t pinNum)
 void set_green_pin(uint16_t pinNum)
 {
   uint32_t c = strip.Color(0,255,0);
+  strip.setPixelColor(pinNum, c);
+  strip.show();
+}
+void turn_off(uint16_t pinNum)
+{
+  uint32_t c = strip.Color(0,0,0);
   strip.setPixelColor(pinNum, c);
   strip.show();
 }
@@ -224,15 +227,15 @@ void useInterrupt(boolean v) {
 }
 
 uint32_t timer = millis();
-void read_gps_write_to_sd(int cdsValue)
+void read_gps_write_to_sd()
 {
+  int cds_value = read_cds_value();
   String dataString = "";
   String timeString = "";
   String dateString ="";
   String latitude;
   String longitude;
   String date;
-  String cds_value; 
   String time;
   // in case you are not using the interrupt above, you'll
   // need to 'hand query' the GPS, not suggested :(
@@ -261,7 +264,6 @@ void read_gps_write_to_sd(int cdsValue)
   // approximately every 2 seconds or so, print out the current stats
   if (millis() - timer > 2000) { 
     timer = millis(); // reset the timer
-    
     String hour = String(GPS.hour+9);
     // 현재 사용하는 라이브러리가 GMT표준시간을 출력합니다.
     // 우리나라는 GMT표준시간보다 9시간 빠르므로 9시간 더해주면 됩니다.
@@ -288,21 +290,18 @@ void read_gps_write_to_sd(int cdsValue)
       latitude += GPS.latitude;
       latitude +=",";
       longitude += GPS.longitude;
-      longitude +=",";
       dateString += date;
       dateString += ",";
       timeString += time;
       timeString += ",";
-      cds_value += cdsValue;
-      
-      File  dataFile = SD.open("file.csv", FILE_WRITE);
+
+      File dataFile = SD.open("file.csv", FILE_WRITE);
       if (dataFile) 
       {
         dataFile.print(dateString);
         dataFile.print(timeString);
         dataFile.print(latitude);
-        dataFile.print(longitude);
-        dataFile.print(cds_value);
+        dataFile.println(longitude);
         dataFile.close();
         set_green_pin(3);
       }
