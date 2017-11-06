@@ -233,8 +233,8 @@ void read_gps_write_to_sd()
   String dataString = "";
   String timeString = "";
   String dateString ="";
-  String latitude;
-  String longitude;
+  String latitude = "";
+  String longitude = "";
   String date;
   String time;
   // in case you are not using the interrupt above, you'll
@@ -262,8 +262,8 @@ void read_gps_write_to_sd()
   if (timer > millis())  timer = millis();
 
   // approximately every 2 seconds or so, print out the current stats
-  if (millis() - timer > 2000) { 
-    timer = millis(); // reset the timer
+//  if (millis() - timer > 2000) { 
+//    timer = millis(); // reset the timer
     String hour = String(GPS.hour+9);
     // 현재 사용하는 라이브러리가 GMT표준시간을 출력합니다.
     // 우리나라는 GMT표준시간보다 9시간 빠르므로 9시간 더해주면 됩니다.
@@ -285,32 +285,47 @@ void read_gps_write_to_sd()
  
     delete [] fDate;
     // 년월일을 LCD에 출력해 줍니다.
-
-    if (GPS.fix) {
+    
+    if (GPS.fix) 
+    {
       latitude += GPS.latitude;
       latitude +=",";
       longitude += GPS.longitude;
+      latitude +=",";
       dateString += date;
       dateString += ",";
       timeString += time;
       timeString += ",";
 
-      File dataFile = SD.open("file.csv", FILE_WRITE);
+//       Serial.println("..........................");
+//      Serial.println("..........................");
+//      Serial.println(GPS.latitude);
+//      Serial.println("..........................");
+//      Serial.println("..........................");
+
+      dataFile = SD.open("file.csv", FILE_WRITE);
       if (dataFile) 
       {
-        dataFile.print(dateString);
-        dataFile.print(timeString);
-        dataFile.print(latitude);
-        dataFile.println(longitude);
+        dataFile.print(date);
+        dataFile.print(",");
+        dataFile.print(time);
+        dataFile.print(",");
+        dataFile.print(GPS.latitude);
+        dataFile.print(",");
+        dataFile.println(GPS.longitude);
         dataFile.close();
         set_green_pin(3);
+        delay(500);
+        turn_off(3);
       }
       else 
       {
         set_red_pin(3);
+        delay(500);
+        turn_off(3);
       }  
     }
-  }
+//  }
 }
 
 int check_gps_ready()
